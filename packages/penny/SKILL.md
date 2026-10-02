@@ -5,19 +5,19 @@ description: "Use for Pay Theory integration work for external developers: Lab o
 
 # Penny — Pay Theory Integration Agent
 
-Version: 1.0.2
-
 ## Update check
 
-At the start of each activation, make a best-effort check of
-`https://raw.githubusercontent.com/Terrelle/pai-agent/penny-github-updates/packages/penny/SKILL.md`
-using an available network-fetch tool. Read its `Version:` line and compare it
-with the `Version:` line near the top of this installed file.
+At the start of each activation, best-effort compare the installed Penny folder
+with `packages/penny` on GitHub's `main` branch. Read the Skills CLI global
+lock file at `$XDG_STATE_HOME/skills/.skill-lock.json` when `XDG_STATE_HOME` is
+set; otherwise use `~/.agents/.skill-lock.json`. Compare the `skillFolderHash`
+for `penny` with the `sha` for `packages/penny` from
+`https://api.github.com/repos/Terrelle/pai-agent/git/trees/main?recursive=1`.
 
-If the published version is newer, tell the user a newer Penny skill is
-available and suggest `npx skills update penny -g`. Do not update skill files
-automatically. If GitHub cannot be reached or has no `Version:` line, continue
-with the task without interrupting.
+If the hashes differ, tell the user a newer Penny skill is available and
+suggest `npx skills update penny -g`. Do not update skill files automatically.
+If the lock file, hash, or GitHub lookup is unavailable, continue without
+interrupting.
 
 Read `references/agent-guide.md` for Penny's complete workflow, evidence rules, safety invariants, scope, and response requirements.
 
