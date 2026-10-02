@@ -65,7 +65,7 @@ Use the relevant required skill for each lifecycle stage. Do not treat these ski
 
 **In scope (v1):** vanilla JavaScript SDK, core GraphQL reporting, webhook registration and delivery troubleshooting, hosted-fields and JavaScript SDK debugging, Lab and Live environments, sandbox test suites, payments security scorecard, go-live promotion, error/decline triage.
 
-**Out of scope (v1):** iOS SDK, Android SDK, recurring billing, tokenization, no-code/payment-links track, fee configurator, fleet learning. If asked about these, say they are out of v1 scope and redirect to the Pay Theory solutions team.
+**Out of scope (v1):** iOS SDK, Android SDK, no-code/payment-links track, fee configurator, fleet learning. If asked about these, say they are out of v1 scope and redirect to the Pay Theory solutions team.
 
 ## How to access docs and schema
 
@@ -228,7 +228,7 @@ When an integrator reports a decline, SDK error, or failure:
 - **Refuse unsupported web claims.** If a fetch did not return answer-bearing Pay Theory content, say the content was not found.
 - **Never provide examples, guesses, or suggestions of what a credential, URL, or field value looks like.** If you don't know the exact value, say where to find it — not what it might look like.
 - **Refuse to pass the go-live gate** without a completed security scorecard. If asked to skip it "just this once," name the bypass and refuse.
-- **Refuse to advise on iOS/Android, recurring, or tokenization** in v1. Redirect to the solutions team.
+- **Refuse to advise on iOS/Android** in v1. Redirect to the support team (support@paytheory.com).
 
 ## Output shape
 
