@@ -1,0 +1,67 @@
+{
+  "version": "0.1.0",
+  "note": "Heuristic patterns for an integration-safety scan. Detects patterns of misuse, never a guessed credential value. Not a PCI certification.",
+  "scan_file_extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".html", ".htm", ".vue", ".svelte", ".py", ".go", ".java", ".kt", ".cs", ".php", ".rb", ".env", ".json", ".yaml", ".yml"],
+  "scan_file_names": [".env", ".env.local", ".env.development", ".env.production"],
+  "client_file_extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".html", ".htm", ".vue", ".svelte"],
+  "server_hint_dirs": ["server", "api", "backend", "functions", "lambda", "routes"],
+  "skip_dirs": ["node_modules", ".git", "dist", "build", ".next", "out", "__pycache__", "vendor"],
+  "checks": [
+    {
+      "id": "secret-key-client",
+      "severity": "error",
+      "title": "Secret key in client-side code",
+      "client_only": true,
+      "patterns": [
+        "(?i)\\b(secret[_-]?key|api[_-]?secret|client[_-]?secret|sk_live|sk_test)\\b\\s*[:=]\\s*['\"]?[^'\"\\s,}]{6,}['\"]?",
+        "(?i)authorization\\s*[:=]\\s*['\"]\\s*(partner|[A-Za-z0-9_-]+)\\s*;\\s*[^'\"]+['\"]"
+      ],
+      "message": "A secret key or partner/merchant Authorization header appears in client-side code. The secret key must live only in a server-side environment variable."
+    },
+    {
+      "id": "secret-in-paytheoryfields",
+      "severity": "error",
+      "title": "Secret-looking value passed to payTheoryFields",
+      "client_only": false,
+      "patterns": [
+        "(?i)payTheoryFields\\s*\\(\\s*\\{[^}]*\\b(secret|client_secret|api_secret|sk_live|sk_test)\\b",
+        "(?i)payTheoryFields\\s*\\(\\s*\\{[^}]*\\bapiKey\\b\\s*:\\s*[^,}]*\\b\\w*secret\\w*\\b"
+      ],
+      "message": "payTheoryFields must not receive a secret-looking value; SDK parameters must be supported by the cited docs for the selected flow."
+    },
+    {
+      "id": "raw-card-capture",
+      "severity": "error",
+      "title": "Raw card capture outside hosted fields",
+      "client_only": false,
+      "patterns": [
+        "(?i)<input[^>]*(name|id|placeholder|autocomplete)\\s*=\\s*['\"][^'\"]*(cc-?number|card-?number|cardnumber|card_no|credit-?card|cvv|cvc|card-?cvc)[^'\"]*['\"]",
+        "(?i)\\b(cardNumber|card_number|pan|cvv|cvc)\\b\\s*[:=]\\s*(document\\.|req\\.body|event\\.target|e\\.target|inputs?\\.)"
+      ],
+      "message": "Raw card data appears to be captured directly. Card data must be collected only through Pay Theory hosted fields to keep the integration out of PCI scope."
+    },
+    {
+      "id": "hardcoded-credentials",
+      "severity": "warn",
+      "title": "Hardcoded credential-looking literal",
+      "client_only": false,
+      "patterns": [
+        "(?i)\\b(api[_-]?key|secret[_-]?key|api[_-]?secret|access[_-]?token|auth[_-]?token|bearer)\\b\\s*[:=]\\s*['\"]?[A-Za-z0-9_\\-]{16,}['\"]?"
+      ],
+      "message": "A credential-looking literal is hardcoded. Move credentials to environment variables / secure config."
+    },
+    {
+      "id": "env-url-mismatch",
+      "severity": "warn",
+      "title": "Lab and Live markers mixed",
+      "client_only": false,
+      "patterns": [
+        "(?i)(paytheorylab|paytheorystudy)"
+      ],
+      "secondary_patterns": [
+        "(?i)\\b(production|live)\\b"
+      ],
+      "message": "Lab/sandbox markers (paytheorylab/paytheorystudy) appear alongside production/live markers. Confirm the SDK Import URL and keys match the intended environment."
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "version": "0.1.0",
+  "grounding": "Derived from docs.paytheory.com / llm-docs: sdk/javascript/{hosted_fields,event_listeners,errors,functions}. Published docs are authoritative; confirm specifics there before advising.",
+  "element_ids": {
+    "card_combined": ["pay-theory-credit-card"],
+    "card_separate": ["pay-theory-credit-card-number", "pay-theory-credit-card-exp", "pay-theory-credit-card-cvv"],
+    "card_billing_optional": ["pay-theory-credit-card-account-name", "pay-theory-credit-card-address-1", "pay-theory-credit-card-address-2", "pay-theory-credit-card-city", "pay-theory-credit-card-state", "pay-theory-credit-card-zip"],
+    "ach": ["pay-theory-ach-account-name", "pay-theory-ach-account-number", "pay-theory-ach-routing-number", "pay-theory-ach-account-type"],
+    "eft_canada": ["pay-theory-bank-account-name", "pay-theory-bank-account-number", "pay-theory-bank-institution-number", "pay-theory-bank-transit-number", "pay-theory-bank-account-type"],
+    "cash": ["pay-theory-cash-name", "pay-theory-cash-contact"],
+    "checkout_button": ["pay-theory-checkout-button"],
+    "qr": ["pay-theory-checkout-qr"],
+    "min_widths": {"pay-theory-credit-card-number": "340px", "pay-theory-credit-card": "400px"}
+  },
+  "observers": ["readyObserver", "errorObserver", "stateObserver", "validObserver"],
+  "result_types": {
+    "success": "SUCCESS",
+    "failed": "FAILED",
+    "error": "ERROR",
+    "note": "result.type uses FAILED for a failed transaction. The transaction body status/state may still use FAILURE; do not compare result.type against FAILURE."
+  },
+  "error_codes": {
+    "ACTION_COMPLETE": {"meaning": "An action has completed and cannot be run again.", "fix": "Clear and re-mount the fields before running another action."},
+    "ACTION_IN_PROGRESS": {"meaning": "An action is already in progress.", "fix": "Wait for the current action to finish before calling transact/tokenize again; disable the submit button while in progress."},
+    "CANCEL_FAILED": {"meaning": "A cancellation operation failed.", "fix": "Re-mount the fields and retry."},
+    "FIELD_ERROR": {"meaning": "Error mounting the Pay Theory fields.", "fix": "Confirm the container divs exist with the exact IDs and are visible/sized; ensure payTheoryFields runs after the DOM is ready."},
+    "INVALID_PARAM": {"meaning": "An invalid parameter was provided.", "fix": "Check the arguments passed to payTheoryFields/transact against the functions docs; amount must be an integer in cents."},
+    "NO_FIELDS": {"meaning": "No fields were found on the DOM to mount.", "fix": "Add the correct hosted-field container IDs to the DOM and confirm they exist before initializing."},
+    "NO_TOKEN": {"meaning": "No session token found — typically a network failure.", "fix": "Check network/connectivity and the API key; refresh and retry."},
+    "NOT_READY": {"meaning": "The SDK is not yet connected and ready.", "fix": "Gate the action on readyObserver; do not call transact before the fields are ready."},
+    "NOT_VALID": {"meaning": "The transacting field is not valid when the function ran.", "fix": "Wait for validObserver to report the payment type valid before calling transact; have the user correct the field data."},
+    "SESSION_EXPIRED": {"meaning": "The socket session expired.", "fix": "Refresh the page to start a new session, then retry."},
+    "SOCKET_ERROR": {"meaning": "Error with the socket call.", "fix": "Refresh and retry; check network and that the SDK import URL matches the environment."},
+    "TRANSACTING_FIELD_ERROR": {"meaning": "Multiple transacting fields, or no transacting field visible on the DOM, when running a function.", "fix": "Mount exactly one transacting field set and ensure it is visible (not display:none) when transact runs."}
+  },
+  "symptoms": {
+    "fields-not-rendering": {
+      "summary": "The hosted card/ACH fields do not appear on the page.",
+      "causes": [
+        {"cause": "Container IDs missing or misspelled", "check": "Confirm the exact IDs are present in the DOM (combined: pay-theory-credit-card; separate: -number/-exp/-cvv).", "fix": "Use the exact IDs from the hosted_fields docs.", "ref": "sdk/javascript/hosted_fields"},
+        {"cause": "SDK script not imported or wrong Import URL", "check": "Confirm the SDK <script> import is present and matches the environment (Lab vs Live).", "fix": "Import the correct environment SDK URL from the portal.", "ref": "main/getting_started/quickstart"},
+        {"cause": "payTheoryFields ran before the containers exist", "check": "Is init inside DOMContentLoaded / after the divs render?", "fix": "Initialize after the DOM/containers are present.", "ref": "sdk/javascript/functions"},
+        {"cause": "SDK dynamically loaded inside DOMContentLoaded, then payTheoryFields stays pending", "check": "If payTheoryFields returns Promise <pending> and document.querySelectorAll('iframe') stays at 0 with no console error, check whether the SDK script is created/appended inside a DOMContentLoaded handler.", "fix": "Prefer the docs-style static SDK script import. If the SDK URL must be loaded from runtime config, call payTheoryFields only after document.readyState === 'complete' or window.load.", "ref": "main/getting_started/quickstart"},
+        {"cause": "Containers hidden or zero-size", "check": "Are containers visible and at least min width (number 340px, combined 400px)?", "fix": "Give containers visible size; remove display:none.", "ref": "sdk/javascript/hosted_fields"},
+        {"cause": "CSP/iframe blocked", "check": "Console shows a frame/CSP error?", "fix": "Allow the Pay Theory SDK frame in your Content-Security-Policy.", "ref": "sdk/javascript/errors"}
+      ],
+      "related_errors": ["NO_FIELDS", "FIELD_ERROR"]
+    },
+    "transact-returns-error": {
+      "summary": "transact resolves with result.type ERROR (or throws an SDK error).",
+      "causes": [
+        {"cause": "Fields not valid at submit", "check": "errorObserver/result error is NOT_VALID?", "fix": "Gate transact on validObserver; let the user fix field data.", "ref": "sdk/javascript/event_listeners"},
+        {"cause": "SDK not ready", "check": "Error is NOT_READY?", "fix": "Call transact only after readyObserver fires.", "ref": "sdk/javascript/errors"},
+        {"cause": "Wrong number of transacting fields", "check": "Error is TRANSACTING_FIELD_ERROR?", "fix": "Mount exactly one visible transacting field set.", "ref": "sdk/javascript/errors"},
+        {"cause": "Network/session", "check": "Error is NO_TOKEN / SESSION_EXPIRED / SOCKET_ERROR?", "fix": "Refresh to renew the session and retry; verify connectivity and API key.", "ref": "sdk/javascript/errors"},
+        {"cause": "Amount not in cents", "check": "Is amount a whole number of cents (not dollars)?", "fix": "Pass amount as an integer number of cents (e.g. $10.00 -> 1000).", "ref": "sdk/javascript/functions"}
+      ],
+      "related_errors": ["NOT_VALID", "NOT_READY", "TRANSACTING_FIELD_ERROR", "NO_TOKEN", "SESSION_EXPIRED", "SOCKET_ERROR"]
+    },
+    "result-type-confusion": {
+      "summary": "Code never hits the failure branch, or mis-handles a failed transaction.",
+      "causes": [
+        {"cause": "Comparing result.type against FAILURE", "check": "Does the code check result.type === 'FAILURE'?", "fix": "Branch on SUCCESS / FAILED / ERROR. result.type for a failed transaction is FAILED; FAILURE only appears in the transaction body status/state.", "ref": "sdk/javascript/functions"}
+      ],
+      "related_errors": []
+    },
+    "observers-not-firing": {
+      "summary": "A readyObserver/validObserver/errorObserver/stateObserver callback never runs.",
+      "causes": [
+        {"cause": "Observers registered after payTheoryFields", "check": "Are observers set before initializing the fields?", "fix": "Register observers before calling payTheoryFields.", "ref": "sdk/javascript/event_listeners"},
+        {"cause": "Wrong observer name", "check": "Are names exactly readyObserver/errorObserver/stateObserver/validObserver on window.paytheory?", "fix": "Use the exact observer names.", "ref": "sdk/javascript/event_listeners"}
+      ],
+      "related_errors": []
+    },
+    "fields-never-valid": {
+      "summary": "validObserver never reports the payment type valid, so transact can't run.",
+      "causes": [
+        {"cause": "Not listening to validObserver", "check": "Is validObserver wired and gating the submit button?", "fix": "Use validObserver (passes 'card' | 'ach' | 'cash'); enable submit on valid.", "ref": "sdk/javascript/event_listeners"},
+        {"cause": "Required fields missing", "check": "Are all required fields for the payment type mounted (e.g. number/exp/cvv + zip)?", "fix": "Mount the full required field set, or pass billingInfo for zip.", "ref": "sdk/javascript/hosted_fields"}
+      ],
+      "related_errors": ["NOT_VALID"]
+    },
+    "styling-or-sizing": {
+      "summary": "Fields render but look wrong, are clipped, or styles are ignored.",
+      "causes": [
+        {"cause": "Container too small", "check": "Is the number container >=340px (combined >=400px)?", "fix": "Widen the container.", "ref": "sdk/javascript/hosted_fields"},
+        {"cause": "Unsupported style keys", "check": "Are you setting keys outside the fixed style-object schema?", "fix": "Use only the documented style keys; others are silently ignored.", "ref": "sdk/javascript/hosted_fields"}
+      ],
+      "related_errors": []
+    }
+  }
+}
