@@ -10,7 +10,7 @@ Version: 1.0.2
 ## Update check
 
 At the start of each activation, make a best-effort check of
-`https://raw.githubusercontent.com/Terrelle/pai-agent/main/packages/penny/SKILL.md`
+`https://raw.githubusercontent.com/Terrelle/pai-agent/penny-github-updates/packages/penny/SKILL.md`
 using an available network-fetch tool. Read its `Version:` line and compare it
 with the `Version:` line near the top of this installed file.
 
